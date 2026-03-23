@@ -107,7 +107,76 @@ create index ind_avaliacao on notas(avaliacao)
 
 -- type ficou como ref e o numero de rows diminuiu 
 
+/* 14. Rode EXPLAIN na query: SELECT * FROM vw_boletim WHERE aluno = 'Mariana Lima'; — O EXPLAIN mostra
+a query da view expandida ou não?
+*/
 
+explain select * from vw_boletim where aluno = 'Mariana Lima';
+
+-- Sim, esta expandida
+
+/* 15. Escreva uma query que retorne os alunos cuja nota em qualquer avaliação é maior que a média geral de
+notas. Use subquery no WHERE.
+*/
+
+select a.nome, n.nota, n.avaliacao
+from notas as n
+join alunos as a on n.matricula_id = a.id
+where nota > (select round(avg(nota),2) as media_geral from notas);
+
+/* 16. Escreva uma query que retorne os nomes dos professores que NÃO têm nenhuma turma atribuída. Use NOT
+EXISTS.
+*/
+
+select nome from professores as p
+where not exists(
+	select 1
+    from turmas as t
+    where t.professor_id = p.id
+);
+
+/* 17. Usando subquery no FROM (tabela derivada), liste os alunos com média geral abaixo de 6.0.
+*/
+
+select a.nome, tabela_medias.media
+from (select matricula_id, round(avg(nota),2) as media from notas
+	group by matricula_id) as tabela_medias
+join alunos as a on tabela_medias.matricula_id = a.id
+where tabela_medias.media <6
+
+/* 18. Reescreva o exercício 15 usando JOIN em vez de subquery. Compare os resultados. Rode EXPLAIN em
+ambas.
+*/
+
+explain SELECT a.nome, N.NOTA, N.AVALIACAO 
+FROM ALUNOS AS A
+JOIN NOTAS AS N 
+ON N.ID = A.ID
+WHERE nota > (SELECT AVG(nota) FROM notas);
+
+-- aumentou os rows
+
+
+/* 19. Escreva uma query que mostre, por turma_id, a quantidade de matrículas com status 'ativa' e a quantidade
+total. Use GROUP BY.
+*/
+
+select turma_id,
+	sum(case when status = 'ativa' then 1 else 0 end) as total_ativas,
+    count(*) as total_matriculas
+from matriculas
+group by turma_id
+
+/* 20. Liste as disciplinas cuja média geral de notas é menor que 7. Use JOIN até disciplinas e HAVING.
+*/
+
+SELECT d.nome AS disciplina, AVG(n.nota) AS media_geral
+FROM disciplinas d
+JOIN turmas t ON d.id = t.disciplina_id
+JOIN matriculas m ON t.id = m.turma_id
+JOIN notas n ON n.matricula_id = m.id
+GROUP BY d.id, d.nome
+HAVING AVG(n.nota) < 7;
 
 
 
